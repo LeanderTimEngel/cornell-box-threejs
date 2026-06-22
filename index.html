@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cornell Box — Rendering-Vergleich</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        font-family: system-ui, sans-serif;
+      }
+      #app {
+        position: fixed;
+        inset: 0;
+      }
+      canvas {
+        display: block;
+      }
+      /* Kurze Modus-Erklärung oben links */
+      #annotation {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        max-width: 320px;
+        padding: 10px 14px;
+        background: rgba(0, 0, 0, 0.55);
+        color: #eee;
+        font-size: 13px;
+        line-height: 1.4;
+        border-radius: 6px;
+        pointer-events: none;
+        z-index: 10;
+      }
+      #annotation b {
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="annotation"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
