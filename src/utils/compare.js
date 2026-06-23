@@ -78,8 +78,5 @@ export function createCompare(renderer) {
       renderer.setScissorTest(false);
       handle.style.left = split * 100 + '%';
     },
-    dispose() {
-      handle.remove();
-    },
   };
 }

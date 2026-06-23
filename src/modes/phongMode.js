@@ -64,12 +64,9 @@ export function createPhongMode(renderer, scene, camera, cornell, params) {
   applyShading(params.shading);
 
   return {
-    name: 'Phong',
     render() {
       renderer.render(scene, camera);
     },
-    setSize() {},
-    reset() {},
     applyShading,
     setShininess(v) {
       // Kugelmaterial live aktualisieren (nur im Phong-Shading vorhanden).
@@ -81,12 +78,6 @@ export function createPhongMode(renderer, scene, camera, cornell, params) {
       helpers.forEach((h) => {
         h.visible = visible;
         if (visible) h.update();
-      });
-    },
-    dispose() {
-      helpers.forEach((h) => {
-        scene.remove(h);
-        h.dispose();
       });
     },
   };

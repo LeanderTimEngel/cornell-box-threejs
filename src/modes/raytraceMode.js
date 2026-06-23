@@ -38,22 +38,14 @@ export function createRaytraceMode(renderer, camera, params) {
     uniforms.uLightColor.value.copy(LIGHT_COLORS[params.lightColor]);
   }
 
+  // Der Raytracer ist zustandslos: pro Frame nur Uniforms aktualisieren und den
+  // Fullscreen-Quad zeichnen. (Die Auflösung ist egal, der Shader rechnet pro
+  // Pixel, daher kein setSize nötig.)
   return {
-    name: 'Raytracing',
     render() {
       updateCommonUniforms(uniforms, camera);
       syncParams();
       renderer.render(quadScene, quadCam);
-    },
-    setSize() {
-      /* Fullscreen-Quad braucht keine Größenanpassung */
-    },
-    reset() {
-      /* zustandslos */
-    },
-    dispose() {
-      material.dispose();
-      quad.geometry.dispose();
     },
   };
 }

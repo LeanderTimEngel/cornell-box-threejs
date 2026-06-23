@@ -75,8 +75,6 @@ export function createRadiosityMode(renderer, camera, params) {
   }
 
   return {
-    name: 'Radiosity',
-
     // Ein neues Sample akkumulieren (offscreen, ohne Scissor aufrufen!).
     accumulate() {
       updateCommonUniforms(uniforms, camera);
@@ -124,14 +122,6 @@ export function createRadiosityMode(renderer, camera, params) {
     // Akkumulation neu starten (Kamera/Parameter haben sich geändert)
     reset() {
       frame = 0;
-    },
-
-    dispose() {
-      traceMat.dispose();
-      displayMat.dispose();
-      quad.geometry.dispose();
-      rtA.dispose();
-      rtB.dispose();
     },
   };
 }

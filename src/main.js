@@ -79,10 +79,12 @@ const modes = { Phong: phong, Raytracing: raytrace, Radiosity: radiosity };
 const compare = createCompare(renderer);
 
 // --- Hilfsfunktionen -------------------------------------------------------
+// Ist der Radiosity-Modus gerade sichtbar (direkt oder als rechte Vergleichshälfte)?
 function isRadiosityVisible() {
-  if (params.modus === 'Radiosity') return true;
-  if (params.compare && params.compareRight === 'Radiosity') return true;
-  return false;
+  return (
+    params.modus === 'Radiosity' ||
+    (params.compare && params.compareRight === 'Radiosity')
+  );
 }
 
 // Lichtfarbe auf alle Repräsentationen anwenden (three.js + Shader-Modi teilen
@@ -122,17 +124,18 @@ const ANNOTATIONS = {
   },
 };
 
+// Befüllt die Info-Karte oben links (Akzentfarbe + Kopfzeile + Erklärtext).
 function renderCard(accent, kicker, title, body) {
   annotationEl.style.setProperty('--accent', accent);
-  annotationEl.innerHTML =
-    '<div class="ann-head"><span class="ann-dot"></span><div>' +
-    '<div class="ann-kicker">' +
-    kicker +
-    '</div><div class="ann-title">' +
-    title +
-    '</div></div></div><p class="ann-body">' +
-    body +
-    '</p>';
+  annotationEl.innerHTML = `
+    <div class="ann-head">
+      <span class="ann-dot"></span>
+      <div>
+        <div class="ann-kicker">${kicker}</div>
+        <div class="ann-title">${title}</div>
+      </div>
+    </div>
+    <p class="ann-body">${body}</p>`;
 }
 
 function updateAnnotation() {
@@ -140,13 +143,10 @@ function updateAnnotation() {
     renderCard(
       '#a78bfa',
       'Vergleichsansicht',
-      params.modus + ' ↔ ' + params.compareRight,
-      'Links <b>' +
-        params.modus +
-        '</b>, rechts <b>' +
-        params.compareRight +
-        '</b>. Trenner in der Mitte ziehen. ' +
-        'Achte auf das Color Bleeding, das nur im Radiosity-Modus auftritt.'
+      `${params.modus} ↔ ${params.compareRight}`,
+      `Links <b>${params.modus}</b>, rechts <b>${params.compareRight}</b>. ` +
+        'Trenner in der Mitte ziehen. Achte auf das Color Bleeding, ' +
+        'das nur im Radiosity-Modus auftritt.'
     );
   } else {
     const a = ANNOTATIONS[params.modus];
