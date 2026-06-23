@@ -18,6 +18,9 @@ import { createGUI } from './controls/gui.js';
 
 const container = document.getElementById('app');
 const annotationEl = document.getElementById('annotation');
+const giStatusEl = document.getElementById('gi-status');
+const giFillEl = giStatusEl.querySelector('.gi-fill');
+const giCountEl = giStatusEl.querySelector('.gi-count');
 
 // --- Renderer --------------------------------------------------------------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -33,7 +36,7 @@ container.appendChild(renderer.domElement);
 
 // --- Szene & Kamera --------------------------------------------------------
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111);
+scene.background = new THREE.Color(0x0e0f13);
 
 const camera = new THREE.PerspectiveCamera(
   50,
@@ -91,32 +94,63 @@ function applyLightColor(key) {
   radiosity.reset(); // Beleuchtung geändert -> GI neu akkumulieren
 }
 
+// Pro Modus: Akzentfarbe (für Punkt + linker Rand) und Erklärtext.
 const ANNOTATIONS = {
-  Phong:
-    '<b>Phong (lokales Beleuchtungsmodell)</b><br>Jede Fläche wird unabhängig direkt beleuchtet — ' +
-    'kein ambienter Term, <b>kein Color Bleeding</b>. Harte Schatten (ShadowMap). ' +
-    'Die Spiegelung der farbigen Wände auf der Kugel fehlt hier.',
-  Raytracing:
-    '<b>Raytracing</b><br>Primär-, Schatten- und Reflexionsstrahlen im Shader. ' +
-    'Die Kugel <b>spiegelt</b> die farbigen Wände, harte Schatten durch Schattenstrahlen. ' +
-    'Abbruch nach N Reflexionen. Diffuse Flächen tauschen <b>kein</b> Licht aus → kein Color Bleeding.',
-  Radiosity:
-    '<b>Global Illumination (Path Tracing)</b><br>Indirekte diffuse Beleuchtung. ' +
-    'Beachte das <b>Color Bleeding</b>: die grüne/rote Wand färbt Boden, Decke und Säule ein. ' +
-    'Weiche Schatten. Bild wird progressiv akkumuliert (kurz ruhig halten).',
+  Phong: {
+    accent: '#5db4ff',
+    title: 'Phong',
+    body:
+      'Lokales Beleuchtungsmodell — jede Fläche wird unabhängig direkt beleuchtet. ' +
+      'Kein ambienter Term, <b>kein Color Bleeding</b>, harte Schatten (ShadowMap). ' +
+      'Die Spiegelung der farbigen Wände auf der Kugel fehlt hier.',
+  },
+  Raytracing: {
+    accent: '#22d3c5',
+    title: 'Raytracing',
+    body:
+      'Primär-, Schatten- und Reflexionsstrahlen im Shader. Die Kugel <b>spiegelt</b> ' +
+      'die farbigen Wände, harte Schatten durch Schattenstrahlen, Abbruch nach N Reflexionen. ' +
+      'Diffuse Flächen tauschen <b>kein</b> Licht aus → kein Color Bleeding.',
+  },
+  Radiosity: {
+    accent: '#ffd166',
+    title: 'Global Illumination',
+    body:
+      'Path Tracing mit indirekter diffuser Beleuchtung. Beachte das <b>Color Bleeding</b>: ' +
+      'die grüne/rote Wand färbt Boden, Decke und Säule ein. Weiche Schatten. ' +
+      'Das Bild wird progressiv akkumuliert — kurz ruhig halten.',
+  },
 };
+
+function renderCard(accent, kicker, title, body) {
+  annotationEl.style.setProperty('--accent', accent);
+  annotationEl.innerHTML =
+    '<div class="ann-head"><span class="ann-dot"></span><div>' +
+    '<div class="ann-kicker">' +
+    kicker +
+    '</div><div class="ann-title">' +
+    title +
+    '</div></div></div><p class="ann-body">' +
+    body +
+    '</p>';
+}
 
 function updateAnnotation() {
   if (params.compare) {
-    annotationEl.innerHTML =
-      '<b>Vergleich:</b> links = ' +
-      params.modus +
-      ', rechts = ' +
-      params.compareRight +
-      '<br>Trenner mittig ziehen. ' +
-      'Achte auf das Color Bleeding, das nur im Radiosity-Modus auftritt.';
+    renderCard(
+      '#a78bfa',
+      'Vergleichsansicht',
+      params.modus + ' ↔ ' + params.compareRight,
+      'Links <b>' +
+        params.modus +
+        '</b>, rechts <b>' +
+        params.compareRight +
+        '</b>. Trenner in der Mitte ziehen. ' +
+        'Achte auf das Color Bleeding, das nur im Radiosity-Modus auftritt.'
+    );
   } else {
-    annotationEl.innerHTML = ANNOTATIONS[params.modus];
+    const a = ANNOTATIONS[params.modus];
+    renderCard(a.accent, 'Render-Modus', a.title, a.body);
   }
 }
 
@@ -171,6 +205,21 @@ function onResize() {
 window.addEventListener('resize', onResize);
 radiosity.setSize(window.innerWidth, window.innerHeight);
 
+// --- GI-Konvergenz-Indikator -----------------------------------------------
+// Blendet im Radiosity-Modus die akkumulierte Sample-Zahl ein. Ab ~800 Samples
+// gilt das Bild als praktisch konvergiert (Balken voll).
+const GI_CONVERGED = 800;
+function updateGiStatus(visible) {
+  if (!visible) {
+    giStatusEl.style.display = 'none';
+    return;
+  }
+  giStatusEl.style.display = 'flex';
+  const n = radiosity.getFrame();
+  giCountEl.textContent = n;
+  giFillEl.style.width = Math.min(100, (n / GI_CONVERGED) * 100) + '%';
+}
+
 // --- Render-Loop -----------------------------------------------------------
 function animate() {
   requestAnimationFrame(animate);
@@ -184,7 +233,9 @@ function animate() {
   const h = window.innerHeight;
 
   // GI-Akkumulation IMMER offscreen vor dem Scissor-Block ausführen.
-  if (isRadiosityVisible()) radiosity.accumulate();
+  const giVisible = isRadiosityVisible();
+  if (giVisible) radiosity.accumulate();
+  updateGiStatus(giVisible);
 
   if (params.compare) {
     compare.renderSplit(

@@ -4,14 +4,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cornell Box — Rendering-Vergleich</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
     <style>
+      :root {
+        --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Helvetica, Arial, sans-serif;
+        --glass-bg: rgba(17, 19, 26, 0.72);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text: #c7cdd8;
+        --text-strong: #ffffff;
+        --text-muted: #828b9c;
+        --shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+      }
+
       html,
       body {
         margin: 0;
         height: 100%;
         overflow: hidden;
-        background: #000;
-        font-family: system-ui, sans-serif;
+        background: #0e0f13;
+        font-family: var(--font);
+        -webkit-font-smoothing: antialiased;
       }
       #app {
         position: fixed;
@@ -20,29 +40,214 @@
       canvas {
         display: block;
       }
-      /* Kurze Modus-Erklärung oben links */
+
+      /* ---------- Info-Panel (Modus-Erklärung) ---------- */
       #annotation {
         position: fixed;
-        top: 12px;
-        left: 12px;
-        max-width: 320px;
-        padding: 10px 14px;
-        background: rgba(0, 0, 0, 0.55);
-        color: #eee;
-        font-size: 13px;
-        line-height: 1.4;
-        border-radius: 6px;
-        pointer-events: none;
+        top: 18px;
+        left: 18px;
+        max-width: 340px;
+        padding: 15px 17px 16px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(18px) saturate(140%);
+        -webkit-backdrop-filter: blur(18px) saturate(140%);
+        border: 1px solid var(--glass-border);
+        border-left: 3px solid var(--accent, #5db4ff);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        color: var(--text);
+        font-size: 12.5px;
+        line-height: 1.58;
         z-index: 10;
+        pointer-events: none;
+        animation: cardIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
       }
-      #annotation b {
-        color: #fff;
+      .ann-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 9px;
+      }
+      .ann-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex: none;
+        background: var(--accent, #5db4ff);
+        box-shadow: 0 0 12px var(--accent, #5db4ff);
+      }
+      .ann-kicker {
+        font-size: 9.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 600;
+        line-height: 1.4;
+      }
+      .ann-title {
+        font-size: 15.5px;
+        font-weight: 700;
+        color: var(--text-strong);
+        line-height: 1.2;
+      }
+      .ann-body {
+        margin: 0;
+      }
+      .ann-body b {
+        color: var(--text-strong);
+        font-weight: 600;
+      }
+
+      /* ---------- Steuerungs-Hinweis ---------- */
+      #hint {
+        position: fixed;
+        left: 18px;
+        bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid var(--glass-border);
+        border-radius: 999px;
+        color: var(--text-muted);
+        font-size: 11.5px;
+        z-index: 10;
+        pointer-events: none;
+      }
+      #hint b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      #hint .sep {
+        opacity: 0.4;
+      }
+
+      /* ---------- GI-Konvergenz-Indikator ---------- */
+      #gi-status {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        display: none;
+        align-items: center;
+        gap: 11px;
+        padding: 8px 15px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid var(--glass-border);
+        border-radius: 999px;
+        color: var(--text);
+        font-size: 11.5px;
+        font-variant-numeric: tabular-nums;
+        z-index: 10;
+        pointer-events: none;
+      }
+      #gi-status .gi-label {
+        color: var(--text-muted);
+      }
+      #gi-status .gi-bar {
+        width: 88px;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.12);
+        overflow: hidden;
+      }
+      #gi-status .gi-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 2px;
+        background: linear-gradient(90deg, #5db4ff, #8be08f, #ffd166);
+        transition: width 0.25s ease;
+      }
+      #gi-status .gi-count {
+        color: var(--text-strong);
+        font-weight: 600;
+      }
+
+      @keyframes cardIn {
+        from {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ---------- lil-gui: modernes Glas-Theme ---------- */
+      .lil-gui.root {
+        --background-color: rgba(17, 19, 26, 0.72);
+        --widget-color: rgba(255, 255, 255, 0.07);
+        --hover-color: rgba(255, 255, 255, 0.13);
+        --focus-color: rgba(255, 255, 255, 0.18);
+        --number-color: #5db4ff;
+        --string-color: #8be08f;
+        --title-background-color: rgba(255, 255, 255, 0.035);
+        --title-text-color: #f2f4f8;
+        --text-color: #c7cdd8;
+        --slider-knob-color: #eef1f6;
+        --font-family: var(--font);
+        --font-size: 12px;
+        --input-font-size: 12px;
+        --padding: 9px;
+        --spacing: 7px;
+        --widget-height: 26px;
+        --title-height: 34px;
+        --name-width: 48%;
+        --border-radius: 8px;
+        --scrollbar-width: 6px;
+        width: 304px;
+        top: 18px;
+        right: 18px;
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px) saturate(140%);
+        -webkit-backdrop-filter: blur(18px) saturate(140%);
+        overflow: hidden;
+      }
+      .lil-gui.root > .title {
+        font-weight: 700;
+        font-size: 12.5px;
+        letter-spacing: 0.02em;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .lil-gui .title {
+        font-weight: 600;
+      }
+      /* Ordner-Überschriften etwas absetzen */
+      .lil-gui .children > .lil-gui > .title {
+        color: #aeb6c4;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 10px;
+      }
+      .lil-gui .controller {
+        border-radius: var(--border-radius);
       }
     </style>
   </head>
   <body>
     <div id="app"></div>
+
     <div id="annotation"></div>
+
+    <div id="hint">
+      <b>Ziehen</b> drehen <span class="sep">·</span> <b>Scrollen</b> zoomen
+      <span class="sep">·</span> <b>Rechts-Ziehen</b> verschieben
+    </div>
+
+    <div id="gi-status">
+      <span class="gi-label">Global Illumination</span>
+      <span class="gi-bar"><span class="gi-fill"></span></span>
+      <span><span class="gi-count">0</span> Samples</span>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
