@@ -10,6 +10,10 @@ Beleuchtungs-/Rendering-Verfahren zeigt und direkt vergleichbar macht:
 Der didaktische Kern ist, die **Unterschiede zwischen den Verfahren sichtbar zu
 machen** — insbesondere das Color Bleeding, das nur die globale Beleuchtung erzeugt.
 
+> 📖 Eine **ausführliche technische Dokumentation** (Theorie der Verfahren,
+> Code-Aufbau, Mathematik der Schnitttests, Implementierungsdetails) findest du
+> in [DOKUMENTATION.md](DOKUMENTATION.md).
+
 ---
 
 ## Schnellstart
