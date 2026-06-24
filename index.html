@@ -21,6 +21,7 @@
         --text: #c7cdd8;
         --text-strong: #ffffff;
         --text-muted: #828b9c;
+        --accent-ui: #5db4ff;
         --shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
       }
 
@@ -41,7 +42,9 @@
         display: block;
       }
 
-      /* ---------- Info-Panel (Modus-Erklärung) ---------- */
+      /* ===================================================================
+         Info-Panel (Modus-Erklärung, oben links)
+      =================================================================== */
       #annotation {
         position: fixed;
         top: 18px;
@@ -98,7 +101,9 @@
         font-weight: 600;
       }
 
-      /* ---------- Steuerungs-Hinweis ---------- */
+      /* ===================================================================
+         Steuerungs-Hinweis (unten links)
+      =================================================================== */
       #hint {
         position: fixed;
         left: 18px;
@@ -125,7 +130,9 @@
         opacity: 0.4;
       }
 
-      /* ---------- GI-Konvergenz-Indikator ---------- */
+      /* ===================================================================
+         GI-Konvergenz-Indikator (unten mittig)
+      =================================================================== */
       #gi-status {
         position: fixed;
         left: 50%;
@@ -179,69 +186,242 @@
         }
       }
 
-      /* ---------- lil-gui: modernes Glas-Theme ---------- */
-      .lil-gui.root {
-        --background-color: rgba(17, 19, 26, 0.72);
-        --widget-color: rgba(255, 255, 255, 0.07);
-        --hover-color: rgba(255, 255, 255, 0.13);
-        --focus-color: rgba(255, 255, 255, 0.18);
-        --number-color: #5db4ff;
-        --string-color: #8be08f;
-        --title-background-color: rgba(255, 255, 255, 0.035);
-        --title-text-color: #f2f4f8;
-        --text-color: #c7cdd8;
-        --slider-knob-color: #eef1f6;
-        --font-family: var(--font);
-        --font-size: 12px;
-        --input-font-size: 12px;
-        --padding: 9px;
-        --spacing: 7px;
-        --widget-height: 26px;
-        --title-height: 34px;
-        --name-width: 48%;
-        --border-radius: 8px;
-        --scrollbar-width: 6px;
-        width: 304px;
+      /* ===================================================================
+         Bedien-Panel (oben rechts) — reines HTML/CSS, keine UI-Bibliothek.
+         Das Markup steht unten im <body>, die Verdrahtung in controls/gui.js.
+      =================================================================== */
+      #panel {
+        position: fixed;
         top: 18px;
         right: 18px;
+        width: 300px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(18px) saturate(140%);
+        -webkit-backdrop-filter: blur(18px) saturate(140%);
         border: 1px solid var(--glass-border);
         border-radius: 16px;
         box-shadow: var(--shadow);
-        backdrop-filter: blur(18px) saturate(140%);
-        -webkit-backdrop-filter: blur(18px) saturate(140%);
+        color: var(--text);
+        font-size: 12.5px;
+        z-index: 10;
         overflow: hidden;
       }
-      .lil-gui.root > .title {
-        font-weight: 700;
+      .panel-title {
+        padding: 12px 14px;
         font-size: 12.5px;
-        letter-spacing: 0.02em;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        color: #f2f4f8;
         border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       }
-      .lil-gui .title {
-        font-weight: 600;
+      .panel-group {
+        padding: 10px 14px;
       }
-      /* Ordner-Überschriften etwas absetzen */
-      .lil-gui .children > .lil-gui > .title {
-        color: #aeb6c4;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+      .panel-group + .panel-group {
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .panel-group h2 {
+        margin: 0 0 7px;
         font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: #aeb6c4;
       }
-      .lil-gui .controller {
-        border-radius: var(--border-radius);
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 30px;
+      }
+      .row > span:first-child {
+        color: var(--text);
+      }
+
+      /* Dropdown */
+      select {
+        appearance: none;
+        -webkit-appearance: none;
+        min-width: 116px;
+        padding: 5px 26px 5px 10px;
+        font: inherit;
+        font-size: 12px;
+        color: var(--text);
+        background-color: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 7px;
+        cursor: pointer;
+        /* Chevron als Inline-SVG (kein externes Bild nötig) */
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23aeb6c4' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+      }
+      select:hover {
+        background-color: rgba(255, 255, 255, 0.12);
+      }
+      option {
+        color: #111;
+      }
+
+      /* Schieberegler */
+      .slider-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      input[type='range'] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 96px;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.16);
+        cursor: pointer;
+      }
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #eef1f6;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+      }
+      input[type='range']::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border: none;
+        border-radius: 50%;
+        background: #eef1f6;
+      }
+      .slider-wrap output {
+        min-width: 30px;
+        text-align: right;
+        color: var(--text-strong);
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+      }
+
+      /* Umschalter (Checkbox als Switch) */
+      .toggle {
+        appearance: none;
+        -webkit-appearance: none;
+        flex: none;
+        width: 36px;
+        height: 21px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+        position: relative;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .toggle::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 17px;
+        height: 17px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.2s;
+      }
+      .toggle:checked {
+        background: var(--accent-ui);
+      }
+      .toggle:checked::after {
+        transform: translateX(15px);
       }
     </style>
   </head>
   <body>
     <div id="app"></div>
 
+    <!-- Info-Karte (Modus-Erklärung) — Inhalt wird in main.js gesetzt -->
     <div id="annotation"></div>
 
+    <!-- Bedien-Panel: statisches Markup, Verhalten in controls/gui.js -->
+    <aside id="panel">
+      <div class="panel-title">Cornell Box — Rendering-Vergleich</div>
+
+      <div class="panel-group">
+        <h2>Modus</h2>
+        <label class="row">
+          <span>Render-Modus</span>
+          <select id="c-mode">
+            <option>Phong</option>
+            <option>Raytracing</option>
+            <option>Radiosity</option>
+          </select>
+        </label>
+        <label class="row">
+          <span>Vergleich (Split)</span>
+          <input type="checkbox" id="c-compare" class="toggle" />
+        </label>
+        <label class="row">
+          <span>… rechte Hälfte</span>
+          <select id="c-compare-right">
+            <option>Phong</option>
+            <option>Raytracing</option>
+            <option>Radiosity</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="panel-group">
+        <h2>Beleuchtung</h2>
+        <label class="row">
+          <span>Lichtfarbe</span>
+          <select id="c-light">
+            <option value="weiss">weiß</option>
+            <option value="gelb">gelb</option>
+            <option value="tuerkis">türkis</option>
+          </select>
+        </label>
+        <label class="row">
+          <span>Shininess (Kugel)</span>
+          <span class="slider-wrap">
+            <input type="range" id="c-shininess" min="1" max="256" step="1" />
+            <output id="o-shininess">80</output>
+          </span>
+        </label>
+      </div>
+
+      <div class="panel-group">
+        <h2>Raytracing</h2>
+        <label class="row">
+          <span>Reflexionstiefe N</span>
+          <span class="slider-wrap">
+            <input type="range" id="c-bounces" min="0" max="8" step="1" />
+            <output id="o-bounces">3</output>
+          </span>
+        </label>
+      </div>
+
+      <div class="panel-group">
+        <h2>Phong-Demonstration</h2>
+        <label class="row">
+          <span>Shading</span>
+          <select id="c-shading">
+            <option>Flat</option>
+            <option>Gouraud</option>
+            <option>Phong</option>
+          </select>
+        </label>
+        <label class="row">
+          <span>Normalen anzeigen</span>
+          <input type="checkbox" id="c-normals" class="toggle" />
+        </label>
+      </div>
+    </aside>
+
+    <!-- Steuerungs-Hinweis -->
     <div id="hint">
       <b>Ziehen</b> drehen <span class="sep">·</span> <b>Scrollen</b> zoomen
       <span class="sep">·</span> <b>Rechts-Ziehen</b> verschieben
     </div>
 
+    <!-- GI-Konvergenz-Indikator (nur im Radiosity-Modus sichtbar) -->
     <div id="gi-status">
       <span class="gi-label">Global Illumination</span>
       <span class="gi-bar"><span class="gi-fill"></span></span>

@@ -155,6 +155,8 @@ function updateAnnotation() {
 }
 
 // --- GUI-API (von controls/gui.js aufgerufen) ------------------------------
+// Jeder Setter schreibt den neuen Wert nach `params` (die Render-Modi lesen
+// von dort) und löst die nötigen Seiteneffekte aus.
 const api = {
   setMode(v) {
     params.modus = v;
@@ -162,28 +164,35 @@ const api = {
     updateAnnotation();
   },
   setCompare(v) {
+    params.compare = v;
     compare.setVisible(v);
     if (v) radiosity.reset();
     updateAnnotation();
   },
   setCompareRight(v) {
+    params.compareRight = v;
     if (v === 'Radiosity') radiosity.reset();
     updateAnnotation();
   },
   setLightColor(v) {
+    params.lightColor = v; // die Shader-Modi lesen die Lichtfarbe aus params
     applyLightColor(v);
   },
   setShininess(v) {
-    phong.setShininess(v); // raytrace liest params.shininess direkt
+    params.shininess = v; // raytrace liest params.shininess direkt
+    phong.setShininess(v);
     radiosity.reset();
   },
-  setMaxBounces() {
-    radiosity.reset(); // (wirkt v. a. im Raytracing; GI sicherheitshalber neu)
+  setMaxBounces(v) {
+    params.maxBounces = v; // raytrace liest params.maxBounces direkt
+    radiosity.reset();
   },
   setShading(v) {
+    params.shading = v;
     phong.applyShading(v);
   },
   setNormals(v) {
+    params.showNormals = v;
     phong.setNormalsVisible(v);
   },
 };

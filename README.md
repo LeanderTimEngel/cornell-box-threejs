@@ -31,6 +31,23 @@ GI-Akkumulation).
 
 ---
 
+## Technologie & Abhängigkeiten
+
+Bewusst minimal gehalten — die Kernalgorithmen sind selbst implementiert:
+
+- **three.js** — die einzige Laufzeit-Abhängigkeit. Genutzt für Szene/Kamera,
+  `MeshPhongMaterial` (Modus 1), `ShaderMaterial` + `WebGLRenderTarget` für die
+  eigenen GLSL-Shader (Modus 2/3), sowie `OrbitControls` und
+  `VertexNormalsHelper` aus den three.js-Addons.
+- **Vite** — nur Build-Tool/Dev-Server (Dev-Abhängigkeit, wird nicht
+  mitausgeliefert).
+- **Keine UI-Bibliothek**: Das Bedien-Panel ist reines HTML/CSS/JS
+  (`index.html` + `src/controls/gui.js`).
+- **Kein Pathtracer-Framework**: Raytracer und Global Illumination sind als
+  eigene Fragment-Shader geschrieben (kein `three-gpu-pathtracer` o. Ä.).
+
+---
+
 ## Was zeigt welcher Modus?
 
 | Modus | Technik | Charakteristische Effekte |
@@ -63,7 +80,7 @@ rendern.
 
 ---
 
-## Bedienung (lil-gui-Panel)
+## Bedienung (Steuerpanel)
 
 - **Render-Modus:** Phong / Raytracing / Radiosity
 - **Vergleich (Split):** zwei Modi nebeneinander; der Trenner wird mit der Maus
@@ -121,7 +138,7 @@ cornell-box/
     ├── main.js                 # Setup, Render-Loop, Modus-/Vergleichs-Verwaltung
     ├── scene.js                # Cornell-Box-Geometrie, Materialien, Licht (Single Source of Truth)
     ├── controls/
-    │   └── gui.js              # lil-gui-Panel (alle Parameter)
+    │   └── gui.js              # Verdrahtung des Bedien-Panels (Markup in index.html)
     ├── modes/
     │   ├── phongMode.js        # Modus 1 + Shading-Umschaltung + Normalen-Toggle
     │   ├── raytraceMode.js     # Modus 2 (Shader-Setup, Uniforms)
