@@ -76,7 +76,8 @@ export function createCompare(renderer) {
       renderRight();
 
       renderer.setScissorTest(false);
-      handle.style.left = split * 100 + '%';
+      // Die Position des Trenners wird nur beim Ziehen gesetzt (onMove),
+      // nicht pro Frame.
     },
   };
 }

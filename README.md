@@ -142,7 +142,8 @@ cornell-box/
     ├── main.js                 # Setup, Render-Loop, Modus-/Vergleichs-Verwaltung
     ├── scene.js                # Cornell-Box-Geometrie, Materialien, Licht (Single Source of Truth)
     ├── controls/
-    │   └── gui.js              # Verdrahtung des Bedien-Panels (Markup in index.html)
+    │   ├── gui.js              # Verdrahtung des Bedien-Panels (Markup in index.html)
+    │   └── overlay.js          # Info-Karte + GI-Konvergenz-Indikator
     ├── modes/
     │   ├── phongMode.js        # Modus 1 + Shading-Umschaltung + Normalen-Toggle
     │   ├── raytraceMode.js     # Modus 2 (Shader-Setup, Uniforms)

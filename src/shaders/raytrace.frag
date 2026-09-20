@@ -17,7 +17,9 @@ uniform float uShininess;     // spekularer Exponent (Glanzlicht der Kugel)
 uniform float uLightIntensity;// Helligkeit der Lichtquelle
 uniform int   uMaxBounces;    // Reflexionstiefe N (Default 3)
 
-const int HARD_MAX = 16;      // konstante Schleifenobergrenze (WebGL-Vorgabe)
+// WebGL verlangt eine konstante Schleifenobergrenze. 8 entspricht dem Maximum
+// des Reflexionstiefe-Reglers; die tatsächliche Tiefe steuert uMaxBounces.
+const int HARD_MAX = 8;
 
 // --- Lokales Phong-Beleuchtungsmodell --------------------------------------
 // Klausurformel:  Farbe = Lichtfarbe ⊙ M ⊙ ( max(0, L·N) + (R·V)^shininess )

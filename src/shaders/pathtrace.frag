@@ -39,11 +39,13 @@ vec3 cosineSampleHemisphere(vec3 n) {
   float u2 = rand();
   float r = sqrt(u1);
   float phi = 2.0 * PI * u2;
-  // orthonormale Basis um n
-  vec3 t = normalize(abs(n.x) > 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0));
-  vec3 tangent = normalize(cross(t, n));
+  // Orthonormale Basis um n aufbauen. Als Starthilfe eine Achse wählen, die
+  // nicht (fast) parallel zu n ist, sonst wird das Kreuzprodukt instabil.
+  vec3 helper = (abs(n.x) > 0.9) ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+  vec3 tangent = normalize(cross(helper, n));
   vec3 bitan = cross(n, tangent);
-  return normalize(tangent * (r * cos(phi)) + bitan * (r * sin(phi)) + n * sqrt(max(0.0, 1.0 - u1)));
+  // Die Richtung ist bereits normiert (r² + (1-u1) = u1 + 1 - u1 = 1).
+  return tangent * (r * cos(phi)) + bitan * (r * sin(phi)) + n * sqrt(max(0.0, 1.0 - u1));
 }
 
 // Direkte Beleuchtung: zufälligen Punkt auf dem Deckenlicht sampeln und die

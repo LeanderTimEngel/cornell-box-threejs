@@ -6,6 +6,7 @@ import { createRaytraceMode } from './modes/raytraceMode.js';
 import { createRadiosityMode } from './modes/radiosityMode.js';
 import { createCompare } from './utils/compare.js';
 import { createGUI } from './controls/gui.js';
+import { showMode, updateGiStatus } from './controls/overlay.js';
 
 // ---------------------------------------------------------------------------
 // main.js — Einstiegspunkt: Setup, Modus-Verwaltung, Render-Loop.
@@ -17,10 +18,6 @@ import { createGUI } from './controls/gui.js';
 // ---------------------------------------------------------------------------
 
 const container = document.getElementById('app');
-const annotationEl = document.getElementById('annotation');
-const giStatusEl = document.getElementById('gi-status');
-const giFillEl = giStatusEl.querySelector('.gi-fill');
-const giCountEl = giStatusEl.querySelector('.gi-count');
 
 // --- Renderer --------------------------------------------------------------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -96,64 +93,6 @@ function applyLightColor(key) {
   radiosity.reset(); // Beleuchtung geändert -> GI neu akkumulieren
 }
 
-// Pro Modus: Akzentfarbe (für Punkt + linker Rand) und Erklärtext.
-const ANNOTATIONS = {
-  Phong: {
-    accent: '#5db4ff',
-    title: 'Phong',
-    body:
-      'Lokales Beleuchtungsmodell — jede Fläche wird unabhängig direkt beleuchtet. ' +
-      'Kein ambienter Term, <b>kein Color Bleeding</b>, harte Schatten (ShadowMap). ' +
-      'Die Spiegelung der farbigen Wände auf der Kugel fehlt hier.',
-  },
-  Raytracing: {
-    accent: '#22d3c5',
-    title: 'Raytracing',
-    body:
-      'Primär-, Schatten- und Reflexionsstrahlen im Shader. Die Kugel <b>spiegelt</b> ' +
-      'die farbigen Wände, harte Schatten durch Schattenstrahlen, Abbruch nach N Reflexionen. ' +
-      'Diffuse Flächen tauschen <b>kein</b> Licht aus → kein Color Bleeding.',
-  },
-  Radiosity: {
-    accent: '#ffd166',
-    title: 'Global Illumination',
-    body:
-      'Path Tracing mit indirekter diffuser Beleuchtung. Beachte das <b>Color Bleeding</b>: ' +
-      'die grüne/rote Wand färbt Boden, Decke und Säule ein. Weiche Schatten. ' +
-      'Das Bild wird progressiv akkumuliert — kurz ruhig halten.',
-  },
-};
-
-// Befüllt die Info-Karte oben links (Akzentfarbe + Kopfzeile + Erklärtext).
-function renderCard(accent, kicker, title, body) {
-  annotationEl.style.setProperty('--accent', accent);
-  annotationEl.innerHTML = `
-    <div class="ann-head">
-      <span class="ann-dot"></span>
-      <div>
-        <div class="ann-kicker">${kicker}</div>
-        <div class="ann-title">${title}</div>
-      </div>
-    </div>
-    <p class="ann-body">${body}</p>`;
-}
-
-function updateAnnotation() {
-  if (params.compare) {
-    renderCard(
-      '#a78bfa',
-      'Vergleichsansicht',
-      `${params.modus} ↔ ${params.compareRight}`,
-      `Links <b>${params.modus}</b>, rechts <b>${params.compareRight}</b>. ` +
-        'Trenner in der Mitte ziehen. Achte auf das Color Bleeding, ' +
-        'das nur im Radiosity-Modus auftritt.'
-    );
-  } else {
-    const a = ANNOTATIONS[params.modus];
-    renderCard(a.accent, 'Render-Modus', a.title, a.body);
-  }
-}
-
 // --- GUI-API (von controls/gui.js aufgerufen) ------------------------------
 // Jeder Setter schreibt den neuen Wert nach `params` (die Render-Modi lesen
 // von dort) und löst die nötigen Seiteneffekte aus.
@@ -161,18 +100,18 @@ const api = {
   setMode(v) {
     params.modus = v;
     if (v === 'Radiosity') radiosity.reset();
-    updateAnnotation();
+    showMode(params);
   },
   setCompare(v) {
     params.compare = v;
     compare.setVisible(v);
     if (v) radiosity.reset();
-    updateAnnotation();
+    showMode(params);
   },
   setCompareRight(v) {
     params.compareRight = v;
     if (v === 'Radiosity') radiosity.reset();
-    updateAnnotation();
+    showMode(params);
   },
   setLightColor(v) {
     params.lightColor = v; // die Shader-Modi lesen die Lichtfarbe aus params
@@ -199,35 +138,25 @@ const api = {
 
 createGUI(params, api);
 applyLightColor(params.lightColor);
-updateAnnotation();
+showMode(params);
 
-// --- Resize ----------------------------------------------------------------
+// --- Fenstergröße ----------------------------------------------------------
+// Die aktuellen Maße werden gecacht, damit die Render-Loop sie nicht bei jedem
+// Frame neu vom Browser erfragen muss.
+let viewW = window.innerWidth;
+let viewH = window.innerHeight;
+
 function onResize() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  camera.aspect = w / h;
+  viewW = window.innerWidth;
+  viewH = window.innerHeight;
+  camera.aspect = viewW / viewH;
   camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
-  radiosity.setSize(w, h);
+  renderer.setSize(viewW, viewH);
+  radiosity.setSize(viewW, viewH);
   renderer.shadowMap.needsUpdate = true; // Shadow-Map neu backen
 }
 window.addEventListener('resize', onResize);
-radiosity.setSize(window.innerWidth, window.innerHeight);
-
-// --- GI-Konvergenz-Indikator -----------------------------------------------
-// Blendet im Radiosity-Modus die akkumulierte Sample-Zahl ein. Ab ~800 Samples
-// gilt das Bild als praktisch konvergiert (Balken voll).
-const GI_CONVERGED = 800;
-function updateGiStatus(visible) {
-  if (!visible) {
-    giStatusEl.style.display = 'none';
-    return;
-  }
-  giStatusEl.style.display = 'flex';
-  const n = radiosity.getFrame();
-  giCountEl.textContent = n;
-  giFillEl.style.width = Math.min(100, (n / GI_CONVERGED) * 100) + '%';
-}
+radiosity.setSize(viewW, viewH);
 
 // --- Render-Loop -----------------------------------------------------------
 function animate() {
@@ -235,21 +164,18 @@ function animate() {
 
   // controls.update() liefert true, wenn sich die Kamera bewegt hat
   // (auch durch Damping-Nachlauf) -> GI-Akkumulation zurücksetzen.
-  const moved = controls.update();
-  if (moved) radiosity.reset();
+  if (controls.update()) radiosity.reset();
 
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-
-  // GI-Akkumulation IMMER offscreen vor dem Scissor-Block ausführen.
+  // GI-Akkumulation IMMER offscreen vor dem Scissor-Block ausführen,
+  // sonst würde der Split-Screen nur eine Hälfte akkumulieren.
   const giVisible = isRadiosityVisible();
   if (giVisible) radiosity.accumulate();
-  updateGiStatus(giVisible);
+  updateGiStatus(giVisible, radiosity.getFrame());
 
   if (params.compare) {
     compare.renderSplit(
-      w,
-      h,
+      viewW,
+      viewH,
       () => modes[params.modus].render(),
       () => modes[params.compareRight].render()
     );

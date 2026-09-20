@@ -44,35 +44,34 @@ struct Hit {
   int mat;       // MAT_DIFFUSE / MAT_MIRROR / MAT_EMISSIVE
 };
 
-// --- Wand-Schnitttests (achsenparallele, endliche Quads) -------------------
-// Strahl-Ebene: t = (planeCoord - ro.k) / rd.k, danach Begrenzung prüfen.
-void testWallX(vec3 ro, vec3 rd, float x, float nx, vec3 col, inout Hit h) {
-  if (abs(rd.x) < 1e-7) return;
-  float t = (x - ro.x) / rd.x;
-  if (t < EPS || t > h.t) return;
+// --- Wand-Schnitttest (eine Funktion für alle fünf Wände) ------------------
+// Die Box ist der Würfel [-1,1]^3. Zeigt die Normale n einer Wand nach INNEN,
+// so erfüllt jeder Punkt p dieser Wand dieselbe Ebenengleichung:
+//
+//     dot(p, n) = -1
+//
+// Beispiel linke Wand (x = -1, Normale (1,0,0)): dot((-1,y,z),(1,0,0)) = -1. ✓
+// Dasselbe gilt für rechte Wand, Boden, Decke und Rückwand. Deshalb genügt EIN
+// Schnitttest, der nur die Normale und die Farbe als Parameter bekommt.
+//
+// Strahl einsetzen:  dot(ro + t*rd, n) = -1  =>  t = (-1 - dot(ro,n)) / dot(rd,n)
+void testWall(vec3 ro, vec3 rd, vec3 n, vec3 col, inout Hit h) {
+  float denom = dot(rd, n);
+  if (abs(denom) < 1e-7) return;              // Strahl parallel zur Wand
+  float t = (-1.0 - dot(ro, n)) / denom;
+  if (t < EPS || t > h.t) return;             // hinter uns oder weiter als bisher
   vec3 p = ro + t * rd;
-  if (p.y < -1.0 || p.y > 1.0 || p.z < -1.0 || p.z > 1.0) return;
-  h.t = t; h.pos = p; h.normal = vec3(nx, 0.0, 0.0); h.color = col; h.mat = MAT_DIFFUSE;
-}
-void testWallZ(vec3 ro, vec3 rd, float z, float nz, vec3 col, inout Hit h) {
-  if (abs(rd.z) < 1e-7) return;
-  float t = (z - ro.z) / rd.z;
-  if (t < EPS || t > h.t) return;
-  vec3 p = ro + t * rd;
-  if (p.x < -1.0 || p.x > 1.0 || p.y < -1.0 || p.y > 1.0) return;
-  h.t = t; h.pos = p; h.normal = vec3(0.0, 0.0, nz); h.color = col; h.mat = MAT_DIFFUSE;
-}
-// Boden / Decke. Bei der Decke (isCeiling) wird das mittige Licht-Rechteck als
-// emissive Fläche markiert.
-void testWallY(vec3 ro, vec3 rd, float y, float ny, vec3 col, bool isCeiling, inout Hit h) {
-  if (abs(rd.y) < 1e-7) return;
-  float t = (y - ro.y) / rd.y;
-  if (t < EPS || t > h.t) return;
-  vec3 p = ro + t * rd;
-  if (p.x < -1.0 || p.x > 1.0 || p.z < -1.0 || p.z > 1.0) return;
-  h.t = t; h.pos = p; h.normal = vec3(0.0, ny, 0.0); h.color = col; h.mat = MAT_DIFFUSE;
-  if (isCeiling && abs(p.x) < uLightHalf.x && abs(p.z) < uLightHalf.y) {
-    h.color = uLightColor; h.mat = MAT_EMISSIVE; // Flächenlicht
+  // Begrenzung: der Trefferpunkt muss innerhalb des Würfels liegen. Die Achse
+  // der Wand selbst ist per Konstruktion genau ±1, die beiden anderen werden
+  // hier auf [-1,1] geprüft.
+  if (any(greaterThan(abs(p), vec3(1.0 + EPS)))) return;
+
+  h.t = t; h.pos = p; h.normal = n; h.color = col; h.mat = MAT_DIFFUSE;
+
+  // Die Decke ist die einzige Wand, deren Normale nach unten zeigt. Liegt der
+  // Treffer dort im mittigen Rechteck, ist es das Flächenlicht (emissiv).
+  if (n.y < -0.5 && abs(p.x) < uLightHalf.x && abs(p.z) < uLightHalf.y) {
+    h.color = uLightColor; h.mat = MAT_EMISSIVE;
   }
 }
 
@@ -92,48 +91,60 @@ void testSphere(vec3 ro, vec3 rd, inout Hit h) {
   h.color = vec3(0.95); h.mat = MAT_MIRROR; // spiegelnd, fast weiße Tönung
 }
 
-// Rotationsmatrix um die Y-Achse (Spalten-Major wie in GLSL üblich)
-mat3 rotY(float a) {
-  float c = cos(a), s = sin(a);
-  return mat3(c, 0.0, -s,  0.0, 1.0, 0.0,  s, 0.0, c);
-}
-
 // --- Strahl-Box (orientierte Säule, OBB) -----------------------------------
-// Wir transformieren den Strahl ins lokale Boxsystem (Rotation rückgängig),
-// machen dort einen Standard-Slab-Test und drehen die Normale zurück.
+// Eine gedrehte Box lässt sich nicht direkt mit dem Slab-Test prüfen. Trick:
+// Statt die Box zu drehen, drehen wir den STRAHL ins lokale Boxsystem zurück,
+// machen dort den normalen (achsenparallelen) Slab-Test und drehen die
+// gefundene Normale wieder zurück in Weltkoordinaten.
 void testPillar(vec3 ro, vec3 rd, inout Hit h) {
-  mat3 Rinv = rotY(-uPillarRot);
-  vec3 lo = Rinv * (ro - uPillarCenter);
+  // Rotation um die Y-Achse. Die Inverse einer Rotationsmatrix ist ihre
+  // Transponierte — wir brauchen cos/sin daher nur einmal.
+  float c = cos(uPillarRot), s = sin(uPillarRot);
+  mat3 R    = mat3(c, 0.0, -s,  0.0, 1.0, 0.0,   s, 0.0, c); // lokal -> Welt
+  mat3 Rinv = mat3(c, 0.0,  s,  0.0, 1.0, 0.0,  -s, 0.0, c); // Welt  -> lokal
+
+  vec3 lo = Rinv * (ro - uPillarCenter); // Strahl im lokalen Boxsystem
   vec3 ld = Rinv * rd;
-  vec3 inv = 1.0 / ld;
-  vec3 t1 = (-uPillarHalf - lo) * inv;
-  vec3 t2 = ( uPillarHalf - lo) * inv;
+
+  // Slab-Test: pro Achse Ein-/Austrittsparameter, dann das größte tmin und das
+  // kleinste tmax. Getroffen wird die Box zwischen tn (Eintritt) und tf (Austritt).
+  vec3 t1 = (-uPillarHalf - lo) / ld;
+  vec3 t2 = ( uPillarHalf - lo) / ld;
   vec3 tmin = min(t1, t2);
   vec3 tmax = max(t1, t2);
   float tn = max(max(tmin.x, tmin.y), tmin.z);
   float tf = min(min(tmax.x, tmax.y), tmax.z);
   if (tn > tf || tf < EPS) return;
-  float t = (tn > EPS) ? tn : tf;
+
+  float t = (tn > EPS) ? tn : tf; // von außen: Eintritt, von innen: Austritt
   if (t > h.t) return;
+
+  // Flächennormale = die Achse mit dem betragsgrößten lokalen Koordinatenanteil
   vec3 lp = lo + t * ld;
-  // Flächennormale = Achse mit dem betragsgrößten lokalen Koordinatenanteil
   vec3 al = abs(lp);
   vec3 nl;
   if (al.x >= al.y && al.x >= al.z) nl = vec3(sign(lp.x), 0.0, 0.0);
   else if (al.y >= al.z)            nl = vec3(0.0, sign(lp.y), 0.0);
   else                              nl = vec3(0.0, 0.0, sign(lp.z));
-  h.t = t; h.pos = ro + t * rd; h.normal = normalize(rotY(uPillarRot) * nl);
-  h.color = vec3(0.95); h.mat = MAT_DIFFUSE;
+
+  h.t = t; h.pos = ro + t * rd;
+  h.normal = R * nl;      // Rotation erhält die Länge -> kein normalize nötig
+  h.color = vec3(1.0);    // weiße, diffuse Säule (wie COLORS.white in scene.js)
+  h.mat = MAT_DIFFUSE;
 }
 
 // --- Gesamte Szene: nächster Treffer ---------------------------------------
+// Jede Wand wird nur durch ihre nach innen zeigende Normale und ihre Farbe
+// beschrieben. Die Farben sind identisch zu COLORS in scene.js.
 Hit intersectScene(vec3 ro, vec3 rd) {
   Hit h; h.t = INF; h.mat = MAT_DIFFUSE; h.color = vec3(0.0); h.normal = vec3(0.0);
-  testWallX(ro, rd, -1.0,  1.0, vec3(0.0, 1.0, 0.0), h); // links: grün
-  testWallX(ro, rd,  1.0, -1.0, vec3(1.0, 0.0, 0.0), h); // rechts: rot
-  testWallY(ro, rd, -1.0,  1.0, vec3(1.0), false, h);    // Boden
-  testWallY(ro, rd,  1.0, -1.0, vec3(1.0), true,  h);    // Decke + Licht
-  testWallZ(ro, rd, -1.0,  1.0, vec3(1.0), h);           // Rückwand
+  //        Normale (nach innen)        Farbe
+  testWall(ro, rd, vec3( 1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), h); // links:   grün
+  testWall(ro, rd, vec3(-1.0, 0.0, 0.0), vec3(1.0, 0.0, 0.0), h); // rechts:  rot
+  testWall(ro, rd, vec3( 0.0, 1.0, 0.0), vec3(1.0),            h); // Boden:   weiß
+  testWall(ro, rd, vec3( 0.0,-1.0, 0.0), vec3(1.0),            h); // Decke:   weiß + Licht
+  testWall(ro, rd, vec3( 0.0, 0.0, 1.0), vec3(1.0),            h); // Rückwand: weiß
+  // Vorderwand (z = +1): bewusst nicht vorhanden — die Box ist zur Kamera offen.
   testSphere(ro, rd, h);
   testPillar(ro, rd, h);
   return h;

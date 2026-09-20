@@ -320,7 +320,8 @@ cornell-box/
     ├── main.js             Einstiegspunkt, Setup, Render-Loop, Zustand, Modus-Auswahl
     ├── scene.js            SCENE-Werte + Bau der three.js-Cornell-Box
     ├── controls/
-    │   └── gui.js          Verdrahtung der Panel-Elemente mit den Callbacks
+    │   ├── gui.js          Verdrahtung der Panel-Elemente mit den Callbacks
+    │   └── overlay.js      Info-Karte (Modus-Erklärung) + GI-Konvergenz-Indikator
     ├── modes/
     │   ├── phongMode.js    Modus 1 + Shading-Umschaltung + Normalen-Toggle
     │   ├── raytraceMode.js Modus 2 (Shader-Material + Uniforms)
@@ -364,8 +365,9 @@ Bewusst: **kein `AmbientLight`** → kein ambienter Term.
 - Definiert das **`api`-Objekt**: für jedes Bedienelement eine Setter-Funktion,
   die `params` aktualisiert **und** die nötigen Seiteneffekte auslöst (z. B.
   „GI-Akkumulation zurücksetzen", „Annotation neu schreiben").
-- Verwaltet die **Info-Karte** (`updateAnnotation`) und den
-  **GI-Konvergenz-Indikator** (`updateGiStatus`).
+- Die HTML-Einblendungen (Info-Karte, GI-Indikator) liegen in
+  `controls/overlay.js`; `main.js` ruft dort nur `showMode()` und
+  `updateGiStatus()` auf.
 - Die **Render-Loop** `animate()`:
   1. `controls.update()` — liefert `true`, wenn sich die Kamera bewegt hat →
      dann GI-Akkumulation zurücksetzen.
@@ -373,6 +375,16 @@ Bewusst: **kein `AmbientLight`** → kein ambienter Term.
      dem Scissor-Block — wichtig, siehe Abschnitt 7).
   3. Entweder Split-Screen (`compare.renderSplit`) oder Einzelbild
      (`modes[params.modus].render()`).
+
+### `controls/overlay.js` — die Einblendungen über dem Canvas
+
+Kapselt alles, was als HTML über dem Bild liegt: die **Info-Karte** oben links
+(Akzentfarbe, Titel und Erklärtext pro Modus) und den **GI-Konvergenz-
+Indikator** unten. Nach außen bietet es nur zwei Funktionen: `showMode(params)`
+(bei Bedienvorgängen) und `updateGiStatus(visible, samples)` (pro Frame).
+Letztere merkt sich den zuletzt angezeigten Zustand und schreibt nur bei
+tatsächlicher Änderung in den DOM — sonst gäbe es 60 überflüssige
+DOM-Schreibvorgänge pro Sekunde.
 
 ### `controls/gui.js` — Verdrahtung des Panels
 
@@ -408,18 +420,36 @@ Der Kern von Modus 2 & 3 sind **analytische Strahl-Objekt-Schnitttests** in
 `scene_common.glsl`. Ein Strahl ist `P(t) = O + t·D` (Ursprung `O`, Richtung
 `D`, Parameter `t ≥ 0`). Gesucht ist immer das **kleinste** `t > 0`.
 
-### Strahl ↔ achsenparallele Wand
+### Strahl ↔ Wand (eine Formel für alle fünf Wände)
 
-Eine Wand liegt auf einer konstanten Koordinate, z. B. `x = k`. Einsetzen:
+Naheliegend wäre, für jede Achse einen eigenen Test zu schreiben (`x = k`,
+`y = k`, `z = k`). Es geht aber deutlich eleganter: Die Box ist der Würfel
+`[−1,1]³`, und wenn man für jede Wand die **nach innen zeigende** Normale `n`
+verwendet, erfüllen **alle fünf Wände dieselbe Ebenengleichung**:
 
 ```
-O_x + t·D_x = k   →   t = (k − O_x) / D_x
+dot(p, n) = −1
 ```
 
-Danach prüft man, ob der Trefferpunkt **innerhalb** der Wandgrenzen liegt
-(z. B. `y,z ∈ [−1,1]`). Bei der Decke wird zusätzlich getestet, ob der Punkt im
-mittigen Licht-Rechteck liegt — dann ist das Material **emissiv** (die
-Lichtquelle selbst).
+Probe für die linke Wand (`x = −1`, Innennormale `n = (1,0,0)`):
+`dot((−1, y, z), (1,0,0)) = −1` ✓. Für die rechte Wand (`x = +1`,
+`n = (−1,0,0)`): `dot((1, y, z), (−1,0,0)) = −1` ✓ — und genauso für Boden,
+Decke und Rückwand.
+
+Setzt man den Strahl ein, ergibt sich ein einziger Schnitttest:
+
+```
+dot(O + t·D, n) = −1     →     t = ( −1 − dot(O, n) ) / dot(D, n)
+```
+
+Danach wird nur noch geprüft, ob der Trefferpunkt **innerhalb des Würfels**
+liegt (`|p| ≤ 1` komponentenweise). Dadurch reicht **eine** Funktion
+`testWall(ro, rd, n, col, h)`, die pro Wand nur Normale und Farbe bekommt —
+statt drei fast identischer Varianten.
+
+Die Decke ist zusätzlich die einzige Wand, deren Normale nach **unten** zeigt
+(`n.y < 0`). Genau dort wird geprüft, ob der Punkt im mittigen Licht-Rechteck
+liegt — dann ist das Material **emissiv** (die Lichtquelle selbst).
 
 ### Strahl ↔ Kugel
 
@@ -713,7 +743,18 @@ DOM-Elemente.
   brauchbar aussehen, statt auf zufällige Lichttreffer zu warten.
 - **Konstante Schleifengrenzen** in den Shadern (`HARD_MAX`, `MAX_DEPTH`), weil
   WebGL keine variablen Schleifenobergrenzen erlaubt; die tatsächliche Tiefe
-  steuert ein `break` gegen das Uniform.
+  steuert ein `break` gegen das Uniform. `HARD_MAX` entspricht exakt dem Maximum
+  des Reflexionstiefe-Reglers (8), damit der Shader keine unnötigen
+  Schleifendurchläufe vorhalten muss.
+- **DOM-Schreibvorgänge nur bei Änderung:** Der GI-Indikator wird zwar pro Frame
+  geprüft, schreibt aber nur, wenn sich Sichtbarkeit oder Sample-Zahl geändert
+  haben (`controls/overlay.js`).
+- **Fenstermaße gecacht:** `window.innerWidth/innerHeight` werden nicht pro
+  Frame abgefragt (das kann ein Layout erzwingen), sondern nur im
+  `resize`-Handler aktualisiert.
+- **Trigonometrie einmal pro Schnitttest:** Der OBB-Test der Säule berechnet
+  `cos/sin` nur einmal und bildet die inverse Rotation als **Transponierte**,
+  statt die Rotationsmatrix zweimal aufzubauen.
 
 ---
 
