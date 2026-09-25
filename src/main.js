@@ -53,7 +53,7 @@ controls.update();
 // --- Cornell Box (three.js-Objekte für den Phong-Modus) --------------------
 const cornell = buildCornellBox();
 scene.add(cornell.root);
-// WICHTIG: kein AmbientLight -> kein ambienter Term (Klausurvorgabe).
+// WICHTIG: kein AmbientLight -> kein ambienter Term (Vorgabe).
 
 // --- Parameter (zentraler Zustand) -----------------------------------------
 const params = {
@@ -62,7 +62,7 @@ const params = {
   compareRight: 'Radiosity',
   lightColor: 'weiss',
   shininess: 80,
-  maxBounces: 3, // Reflexionstiefe N (Klausurvorgabe: 3)
+  maxBounces: 3, // Reflexionstiefe N (Standardwert 3)
   shading: 'Phong',
   showNormals: false,
 };

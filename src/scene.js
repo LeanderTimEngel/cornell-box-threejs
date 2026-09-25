@@ -9,7 +9,7 @@ import * as THREE from 'three';
 // Konsistenz mit dem Raytracer (Modus 2/3 nutzen exakt dieselben Zahlen, siehe
 // SCENE unten).
 //
-// WICHTIG (Klausurbezug): Es gibt KEINEN ambienten Term. In three.js heißt das:
+// WICHTIG: Es gibt KEINEN ambienten Term. In three.js heißt das:
 // keine AmbientLight, und die Materialien bekommen kein emissive-Grundlicht
 // (außer der Lichtquelle selbst). Jede Fläche wird ausschließlich direkt
 // beleuchtet.
@@ -22,7 +22,7 @@ export const COLORS = {
   white: new THREE.Color(1, 1, 1), // Decke / Boden / Rückwand
 };
 
-// Die drei wählbaren Lichtfarben aus den Klausuraufgaben
+// Die drei wählbaren Lichtfarben laut Aufgabenstellung
 export const LIGHT_COLORS = {
   weiss: new THREE.Color(1, 1, 1),
   gelb: new THREE.Color(1, 1, 0),

@@ -2,7 +2,7 @@ import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js
 
 // ---------------------------------------------------------------------------
 // normalsHelper.js — blendet die Flächen-/Eckpunktnormalen als gelbe Pfeile
-// ein. Die Klausur betont den Unterschied zwischen Flächennormalen (flache
+// ein. Zu unterscheiden sind Flächennormalen (flache
 // Boxen/Wände: pro Fläche eine Normale) und Eckpunktnormalen (Kugel: glatt
 // interpolierte Normalen pro Vertex). VertexNormalsHelper zeichnet genau die
 // Normalen, die three.js zur Beleuchtung verwendet.

@@ -22,7 +22,7 @@ uniform int   uMaxBounces;    // Reflexionstiefe N (Default 3)
 const int HARD_MAX = 8;
 
 // --- Lokales Phong-Beleuchtungsmodell --------------------------------------
-// Klausurformel:  Farbe = Lichtfarbe ⊙ M ⊙ ( max(0, L·N) + (R·V)^shininess )
+// Formel:  Farbe = Lichtfarbe ⊙ M ⊙ ( max(0, L·N) + (R·V)^shininess )
 // - L: Vektor zum Licht, N: Flächennormale  (diffuser Term)
 // - R: Reflektanzvektor von L an N, V: Vektor zum Auge (spekularer Term)
 // Kein ambienter Term. Liegt der Punkt im Schatten, entfällt die direkte
@@ -72,7 +72,7 @@ void main() {
 
     if (h.mat == MAT_MIRROR && b < uMaxBounces) {
       // Spiegelung: Materialfarbe der getroffenen Fläche einmultiplizieren
-      // (wie in der Klausurlösung) und Reflexionsstrahl weiterverfolgen.
+      // und Reflexionsstrahl weiterverfolgen.
       throughput *= h.color;
       ro = h.pos + h.normal * EPS;
       rd = reflect(rd, h.normal);      // <-- hier wird R bestimmt

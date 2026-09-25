@@ -10,9 +10,8 @@ Beleuchtungs-/Rendering-Verfahren zeigt und direkt vergleichbar macht:
 Der didaktische Kern ist, die **Unterschiede zwischen den Verfahren sichtbar zu
 machen** — insbesondere das Color Bleeding, das nur die globale Beleuchtung erzeugt.
 
-> 📖 Eine **ausführliche technische Dokumentation** (Theorie der Verfahren,
-> Code-Aufbau, Mathematik der Schnitttests, Implementierungsdetails) findest du
-> in [DOKUMENTATION.md](DOKUMENTATION.md).
+> 📖 Ein **Überblick über den Code-Aufbau** (Render-Modi, Modulstruktur,
+> Umsetzungsdetails) steht in [DOKUMENTATION.md](DOKUMENTATION.md).
 >
 > 📚 Die verwendeten **Quellen und Referenzen** (Aufgabenstellung, Bibliotheken,
 > technische Dokumentation, Zuordnung Technik → Code) stehen in [QUELLEN.md](QUELLEN.md).
@@ -63,7 +62,7 @@ Bewusst minimal gehalten — die Kernalgorithmen sind selbst implementiert:
 | **Raytracing** | GLSL-Shader auf Fullscreen-Quad, Whitted-Style | **Spiegelung** der farbigen Wände auf der Kugel, **harte Schatten** durch Schattenstrahlen, Abbruch nach `N` Reflexionen, **kein** Color Bleeding |
 | **Radiosity** | GLSL-Path-Tracer mit progressiver Akkumulation | **Color Bleeding** (rote/grüne Wand färben weiße Flächen), **weiche Schatten**, indirekte diffuse Beleuchtung |
 
-Der entscheidende Vergleich für die Klausuraufgabe c): **Color Bleeding ist im
+Der entscheidende Vergleich: **Color Bleeding ist im
 Radiosity-Modus deutlich sichtbar und in Phong/Raytracing nachweislich abwesend.**
 Über die **Vergleichsansicht** (Split-Screen-Wischer) lassen sich z. B.
 Raytracing und Radiosity direkt nebeneinander stellen.
