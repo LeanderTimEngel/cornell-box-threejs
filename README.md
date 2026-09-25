@@ -14,8 +14,8 @@ machen** — insbesondere das Color Bleeding, das nur die globale Beleuchtung er
 > Code-Aufbau, Mathematik der Schnitttests, Implementierungsdetails) findest du
 > in [DOKUMENTATION.md](DOKUMENTATION.md).
 >
-> 📚 Die verwendeten **Quellen und Referenzen** (Primärliteratur, technische
-> Dokumentation, Zuordnung Quelle → Code) stehen in [QUELLEN.md](QUELLEN.md).
+> 📚 Die verwendeten **Quellen und Referenzen** (Aufgabenstellung, Bibliotheken,
+> technische Dokumentation, Zuordnung Technik → Code) stehen in [QUELLEN.md](QUELLEN.md).
 
 ---
 
