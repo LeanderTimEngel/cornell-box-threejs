@@ -13,6 +13,9 @@ machen** — insbesondere das Color Bleeding, das nur die globale Beleuchtung er
 > 📖 Eine **ausführliche technische Dokumentation** (Theorie der Verfahren,
 > Code-Aufbau, Mathematik der Schnitttests, Implementierungsdetails) findest du
 > in [DOKUMENTATION.md](DOKUMENTATION.md).
+>
+> 📚 Die verwendeten **Quellen und Referenzen** (Primärliteratur, technische
+> Dokumentation, Zuordnung Quelle → Code) stehen in [QUELLEN.md](QUELLEN.md).
 
 ---
 
@@ -138,6 +141,8 @@ cornell-box/
 ├── package.json
 ├── vite.config.js
 ├── README.md
+├── DOKUMENTATION.md
+├── QUELLEN.md
 └── src/
     ├── main.js                 # Setup, Render-Loop, Modus-/Vergleichs-Verwaltung
     ├── scene.js                # Cornell-Box-Geometrie, Materialien, Licht (Single Source of Truth)

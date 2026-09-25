@@ -316,6 +316,7 @@ cornell-box/
 ├── vite.config.js          Build-Konfiguration (base-Pfad für GitHub Pages)
 ├── README.md               Kurzüberblick & Schnellstart
 ├── DOKUMENTATION.md        (diese Datei)
+├── QUELLEN.md              Quellen, Primärliteratur, Zuordnung Quelle → Code
 └── src/
     ├── main.js             Einstiegspunkt, Setup, Render-Loop, Zustand, Modus-Auswahl
     ├── scene.js            SCENE-Werte + Bau der three.js-Cornell-Box
